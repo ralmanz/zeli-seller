@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Smart Listing</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    :root {
+      --color-background-primary: #ffffff;
+      --color-background-secondary: #f4f4f5;
+      --color-background-info: #e8f0fe;
+      --color-border-secondary: #d4d4d8;
+      --color-border-tertiary: #e4e4e7;
+      --color-text-primary: #18181b;
+      --color-text-secondary: #52525b;
+      --color-text-tertiary: #a1a1aa;
+      --color-text-info: #1a4fd6;
+      --color-text-success: #3b6d11;
+      --border-radius-md: 8px;
+      --border-radius-lg: 12px;
+      --border-radius-xl: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--color-background-secondary);
+      color: var(--color-text-primary);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .page {
+      padding: 1.25rem;
+    }
+
+    .shell {
+      max-width: 360px;
+      margin: 0 auto;
+      background: var(--color-background-primary);
+      border: 0.5px solid var(--color-border-tertiary);
+      border-radius: var(--border-radius-xl);
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+
+    .hero {
+      position: relative;
+      height: 184px;
+      background: var(--color-background-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hero .ti-photo {
+      font-size: 40px;
+      color: var(--color-text-tertiary);
+    }
+
+    .photo-count {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.55);
+      color: #fff;
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: var(--border-radius-md);
+    }
+
+    .thumbs {
+      display: flex;
+      gap: 6px;
+      padding: 8px 12px 4px;
+    }
+
+    .thumb {
+      flex: 1;
+      height: 38px;
+      background: var(--color-background-secondary);
+      border-radius: 6px;
+    }
+
+    .thumb.active {
+      border: 1.5px solid var(--color-border-secondary);
+    }
+
+    .listing-head {
+      padding: 8px 16px 12px;
+    }
+
+    .price {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      margin-top: 2px;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--color-text-secondary);
+    }
+
+    .stats i {
+      font-size: 16px;
+      vertical-align: -2px;
+      margin-right: 4px;
+    }
+
+    .assistant-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 0.5px solid var(--color-border-tertiary);
+      font-size: 12px;
+      color: var(--color-text-tertiary);
+    }
+
+    .assistant-bar .live {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: auto;
+      color: var(--color-text-success);
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--color-text-success);
+    }
+
+    #chat {
+      padding: 0 12px;
+      display: flex;
+      flex-direction: column;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .bubble {
+      max-width: 82%;
+      padding: 8px 12px;
+      font-size: 13.5px;
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+
+    .bubble.user {
+      align-self: flex-end;
+      background: var(--color-background-info);
+      color: var(--color-text-info);
+      border-radius: 14px 14px 4px 14px;
+    }
+
+    .bubble.agent {
+      align-self: flex-start;
+      background: var(--color-background-secondary);
+      color: var(--color-text-primary);
+      border-radius: 14px 14px 14px 4px;
+    }
+
+    .typing {
+      align-self: flex-start;
+      background: var(--color-background-secondary);
+      color: var(--color-text-tertiary);
+      border-radius: 14px;
+      padding: 8px 14px;
+      font-size: 14px;
+      margin-top: 8px;
+      letter-spacing: 3px;
+    }
+
+    .handoff {
+      margin: 10px 12px 2px;
+      padding: 12px;
+      background: var(--color-background-secondary);
+      border: 0.5px solid var(--color-border-tertiary);
+      border-radius: 12px;
+    }
+
+    .handoff p {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+      margin: 0 0 10px;
+    }
+
+    .wa-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      background: #3b6d11;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .wa-btn .ti-brand-whatsapp { font-size: 18px; }
+
+    #chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding: 12px 12px 4px;
+    }
+
+    .chip {
+      font-size: 12.5px;
+      color: var(--color-text-secondary);
+      border: 0.5px solid var(--color-border-secondary);
+      background: transparent;
+      border-radius: 16px;
+      padding: 5px 11px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .chip:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    .composer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px 14px;
+    }
+
+    #input {
+      flex: 1;
+      height: 38px;
+      background: var(--color-background-secondary);
+      border: 0.5px solid var(--color-border-tertiary);
+      border-radius: 19px;
+      padding: 0 14px;
+      font-size: 13px;
+      color: var(--color-text-primary);
+      font-family: inherit;
+      outline: none;
+    }
+
+    #input::placeholder { color: var(--color-text-tertiary); }
+
+    #input:disabled { opacity: 0.6; }
+
+    #send {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: none;
+      background: var(--color-background-info);
+      color: var(--color-text-info);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    #send:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    #send .ti-arrow-up { font-size: 18px; }
+
+    .banner {
+      max-width: 360px;
+      margin: 0 auto 1rem;
+      padding: 12px 14px;
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: var(--border-radius-lg);
+      font-size: 13px;
+      color: #92400e;
+      line-height: 1.45;
+    }
+
+    .banner.error {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: #991b1b;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <h1 class="sr-only">Smart listing — asistente para compradores</h1>
+
+  <div id="banner" class="banner hidden"></div>
+
+  <div class="page">
+    <div class="shell" id="app">
+      <div class="hero" aria-hidden="true">
+        <i class="ti ti-photo"></i>
+        <span class="photo-count">1 / 8</span>
+      </div>
+      <div class="thumbs" aria-hidden="true">
+        <div class="thumb active"></div>
+        <div class="thumb"></div>
+        <div class="thumb"></div>
+        <div class="thumb"></div>
+      </div>
+
+      <div class="listing-head">
+        <div class="price" id="price">—</div>
+        <div class="subtitle" id="subtitle">Cargando…</div>
+        <div class="stats" id="stats"></div>
+        <div class="assistant-bar">
+          <i class="ti ti-robot" aria-hidden="true"></i>
+          <span id="assistant-label">Asistente</span>
+          <span class="live">
+            <span class="live-dot"></span>
+            responde al instante
+          </span>
+        </div>
+      </div>
+
+      <div id="chat" role="log" aria-live="polite" aria-relevant="additions"></div>
+      <div id="handoff-slot"></div>
+
+      <div id="chips"></div>
+
+      <form class="composer" id="composer">
+        <input
+          id="input"
+          type="text"
+          placeholder="Escribe tu pregunta…"
+          autocomplete="off"
+          maxlength="500"
+          disabled
+        >
+        <button type="submit" id="send" aria-label="Enviar" disabled>
+          <i class="ti ti-arrow-up" aria-hidden="true"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var DEFAULT_CHIPS = [
+        "¿Está disponible?",
+        "¿Cuánto es el PH?",
+        "¿Le da el sol en la tarde?",
+        "¿Puedo verlo este fin?",
+      ];
+
+      var params = new URLSearchParams(location.search);
+      var listingId = params.get("listing") || params.get("listingId") || "listing-sf-demo";
+      var conversationKey = "zeli-conv-" + listingId;
+
+      var state = {
+        listing: null,
+        conversationId: sessionStorage.getItem(conversationKey),
+        busy: false,
+      };
+
+      if (!state.conversationId) {
+        state.conversationId = crypto.randomUUID();
+        sessionStorage.setItem(conversationKey, state.conversationId);
+      }
+
+      var chat = document.getElementById("chat");
+      var chipsEl = document.getElementById("chips");
+      var handoffSlot = document.getElementById("handoff-slot");
+      var input = document.getElementById("input");
+      var sendBtn = document.getElementById("send");
+      var banner = document.getElementById("banner");
+      var composer = document.getElementById("composer");
+
+      function showBanner(text, isError) {
+        banner.textContent = text;
+        banner.classList.toggle("error", !!isError);
+        banner.classList.remove("hidden");
+      }
+
+      function fmtPrice(n) {
+        if (n == null) return "Precio a consultar";
+        return "$" + Number(n).toLocaleString("en-US");
+      }
+
+      function fmtStat(icon, label) {
+        return "<span><i class=\"ti ti-" + icon + "\" aria-hidden=\"true\"></i>" + label + "</span>";
+      }
+
+      function renderListing(data) {
+        document.getElementById("price").textContent = fmtPrice(data.price);
+
+        var bedsLabel = data.beds != null ? data.beds + " recámaras" : "Propiedad";
+        document.getElementById("subtitle").textContent =
+          bedsLabel + " · " + (data.location || "Panamá");
+
+        var stats = [];
+        if (data.beds != null) stats.push(fmtStat("bed", data.beds + " rec"));
+        if (data.baths != null) stats.push(fmtStat("bath", data.baths + " baños"));
+        if (data.area_m2 != null) stats.push(fmtStat("ruler-2", data.area_m2 + " m²"));
+        if (data.parking != null) stats.push(fmtStat("car", data.parking + " est."));
+        document.getElementById("stats").innerHTML = stats.join("");
+
+        var agency = data.broker && data.broker.agency ? data.broker.agency : "la inmobiliaria";
+        document.getElementById("assistant-label").textContent = "Asistente de " + agency;
+
+        var greet =
+          "¡Hola! Pregúntame lo que sea de este apartamento. Toca una pregunta o escríbeme — te respondo al instante.";
+        chat.innerHTML = "";
+        chat.appendChild(mkBubble(greet, "agent"));
+
+        renderChips(DEFAULT_CHIPS);
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.focus();
+      }
+
+      function renderChips(labels) {
+        chipsEl.innerHTML = "";
+        labels.forEach(function (label) {
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "chip";
+          btn.textContent = label;
+          btn.addEventListener("click", function () {
+            sendMessage(label, btn);
+          });
+          chipsEl.appendChild(btn);
+        });
+      }
+
+      function mkBubble(text, who) {
+        var d = document.createElement("div");
+        d.className = "bubble " + who;
+        d.textContent = text;
+        return d;
+      }
+
+      function scrollChat() {
+        chat.scrollTop = chat.scrollHeight;
+      }
+
+      function setBusy(on) {
+        state.busy = on;
+        input.disabled = on || !state.listing;
+        sendBtn.disabled = on || !state.listing;
+      }
+
+      function mkHandoff(whatsappUrl) {
+        handoffSlot.innerHTML = "";
+        var wrap = document.createElement("div");
+        wrap.className = "handoff";
+
+        var p = document.createElement("p");
+        var broker = state.listing && state.listing.broker;
+        var name = broker && broker.name ? broker.name : "la corredora";
+        p.textContent =
+          "Perfecto. Te conecto con " + name + ", por WhatsApp para coordinar la visita.";
+
+        var a = document.createElement("a");
+        a.className = "wa-btn";
+        a.href = whatsappUrl;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.innerHTML =
+          '<i class="ti ti-brand-whatsapp" aria-hidden="true"></i>Continuar en WhatsApp';
+
+        wrap.appendChild(p);
+        wrap.appendChild(a);
+        handoffSlot.appendChild(wrap);
+        scrollChat();
+      }
+
+      async function sendMessage(text, chipBtn) {
+        var q = (text || "").trim();
+        if (!q || state.busy || !state.listing) return;
+
+        if (chipBtn) {
+          chipBtn.disabled = true;
+        }
+
+        chat.appendChild(mkBubble(q, "user"));
+        input.value = "";
+        handoffSlot.innerHTML = "";
+        scrollChat();
+
+        var typing = document.createElement("div");
+        typing.className = "typing";
+        typing.textContent = "•••";
+        chat.appendChild(typing);
+        scrollChat();
+        setBusy(true);
+
+        try {
+          var res = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              listingId: listingId,
+              conversationId: state.conversationId,
+              message: q,
+            }),
+          });
+
+          var data = await res.json();
+          typing.remove();
+
+          if (!res.ok) {
+            chat.appendChild(
+              mkBubble("Algo salió mal. Intenta de nuevo en un momento.", "agent"),
+            );
+            scrollChat();
+            return;
+          }
+
+          chat.appendChild(mkBubble(data.reply, "agent"));
+
+          if (data.decision === "handoff" && data.whatsapp) {
+            mkHandoff(data.whatsapp);
+          }
+
+          scrollChat();
+        } catch (_) {
+          typing.remove();
+          chat.appendChild(
+            mkBubble("No pude conectar. Revisa tu internet e intenta de nuevo.", "agent"),
+          );
+          scrollChat();
+        } finally {
+          setBusy(false);
+          input.focus();
+        }
+      }
+
+      composer.addEventListener("submit", function (e) {
+        e.preventDefault();
+        sendMessage(input.value);
+      });
+
+      async function init() {
+        try {
+          var res = await fetch("/api/listings/" + encodeURIComponent(listingId));
+          var data = await res.json();
+
+          if (!res.ok) {
+            showBanner(
+              "Listing no encontrado. Usa ?listing=ID en la URL. Demo: ?listing=listing-sf-demo",
+              true,
+            );
+            document.getElementById("subtitle").textContent = "Listing no disponible";
+            return;
+          }
+
+          state.listing = data;
+          renderListing(data);
+
+          if (listingId === "listing-sf-demo" && !params.get("listing") && !params.get("listingId")) {
+            showBanner("Demo: listing-sf-demo. Agrega ?listing=TU_ID para otro listing.");
+          }
+        } catch (_) {
+          showBanner("No se pudo cargar el listing. ¿Está corriendo el worker?", true);
+          document.getElementById("subtitle").textContent = "Error de conexión";
+        }
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>

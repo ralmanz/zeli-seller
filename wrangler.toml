@@ -1,0 +1,16 @@
+name = "zeli-seller"
+main = "zeli-worker-chat.js"
+compatibility_date = "2024-09-23"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "zeli-seller"
+# Replace after: wrangler d1 create zeli-seller
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+# Secret (not in this file):
+#   wrangler secret put ANTHROPIC_API_KEY
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
