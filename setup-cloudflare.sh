@@ -14,8 +14,11 @@ wrangler whoami
 
 echo ""
 echo "==> 2/6 Create remote D1 database (updates wrangler.toml)"
-if grep -q 'REPLACE_WITH_YOUR_D1_DATABASE_ID' wrangler.toml; then
+if grep -qE 'REPLACE_WITH_YOUR_D1_DATABASE_ID|database_id = ""' wrangler.toml; then
   wrangler d1 create zeli-seller --update-config --location=wnam
+  echo ""
+  echo "If wrangler.toml still has a placeholder database_id, paste the UUID from above."
+  grep -q 'REPLACE_WITH_YOUR_D1_DATABASE_ID' wrangler.toml && exit 1
 else
   echo "database_id already set in wrangler.toml — skipping create"
 fi
