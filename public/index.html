@@ -24,6 +24,10 @@
 
     * { box-sizing: border-box; }
 
+    input, textarea, select {
+      font-size: 16px;
+    }
+
     body {
       margin: 0;
       background: #fff;
@@ -285,12 +289,11 @@
 
     #input {
       flex: 1;
-      height: 38px;
+      height: 40px;
       background: var(--color-background-secondary);
       border: 0.5px solid var(--color-border-tertiary);
-      border-radius: 19px;
+      border-radius: 20px;
       padding: 0 14px;
-      font-size: 13px;
       color: var(--color-text-primary);
       font-family: inherit;
       outline: none;
@@ -468,7 +471,6 @@
         renderChips(DEFAULT_CHIPS);
         input.disabled = false;
         sendBtn.disabled = false;
-        input.focus();
       }
 
       function renderChips(labels) {
@@ -533,6 +535,7 @@
 
         if (chipBtn) {
           chipBtn.disabled = true;
+          input.blur();
         }
 
         chat.appendChild(mkBubble(q, "user"));
@@ -584,7 +587,7 @@
           scrollChat();
         } finally {
           setBusy(false);
-          input.focus();
+          if (!chipBtn) input.focus();
         }
       }
 
