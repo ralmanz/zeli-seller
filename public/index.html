@@ -366,7 +366,7 @@
         <div class="stats" id="stats"></div>
         <div class="assistant-bar">
           <i class="ti ti-robot" aria-hidden="true"></i>
-          <span id="assistant-label">Asistente</span>
+          <span id="assistant-label">Zeli</span>
           <span class="live">
             <span class="live-dot"></span>
             responde al instante
@@ -458,11 +458,13 @@
         if (data.parking != null) stats.push(fmtStat("car", data.parking + " est."));
         document.getElementById("stats").innerHTML = stats.join("");
 
-        var agency = data.broker && data.broker.agency ? data.broker.agency : "la inmobiliaria";
-        document.getElementById("assistant-label").textContent = "Asistente de " + agency;
+        var principal = data.broker && data.broker.name ? data.broker.name : "el corredor";
+        document.getElementById("assistant-label").textContent =
+          "Zeli · asistente de " + principal + ".";
 
         var greet =
-          "¡Hola! Pregúntame lo que sea de este apartamento. Toca una pregunta o escríbeme — te respondo al instante.";
+          "¡Hola! Soy Zeli, la asistente personal de " + principal +
+          ". Pregúntame lo que sea de este apartamento — te respondo al instante.";
         chat.innerHTML = "";
         appendToChat(mkBubble(greet, "agent"));
 
@@ -517,9 +519,9 @@
 
         var p = document.createElement("p");
         var broker = state.listing && state.listing.broker;
-        var name = broker && broker.name ? broker.name : "la corredora";
+        var name = broker && broker.name ? broker.name : "el corredor";
         p.textContent =
-          "Perfecto. Te conecto con " + name + ", por WhatsApp para coordinar la visita.";
+          "Perfecto. Te conecto con " + name + " por WhatsApp para coordinar la visita.";
 
         var a = document.createElement("a");
         a.className = "wa-btn";
