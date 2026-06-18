@@ -28,10 +28,13 @@
       font-size: 16px;
     }
 
-    body {
+    html, body {
+      height: 100%;
       margin: 0;
+    }
+
+    body {
       background: #fff;
-      min-height: 100dvh;
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       color: var(--color-text-primary);
       -webkit-font-smoothing: antialiased;
@@ -50,12 +53,19 @@
     }
 
     .listing {
-      max-width: 480px;
-      margin: 0 auto;
-      min-height: 100dvh;
-      background: #fff;
       display: flex;
       flex-direction: column;
+      height: 100dvh;
+      max-width: 480px;
+      margin: 0 auto;
+      background: #fff;
+    }
+
+    .scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .photo {
@@ -66,7 +76,6 @@
       align-items: center;
       justify-content: center;
       background: var(--color-background-secondary);
-      flex-shrink: 0;
     }
 
     .photo img {
@@ -96,7 +105,6 @@
       display: flex;
       gap: 6px;
       padding: 8px 16px 4px;
-      flex-shrink: 0;
     }
 
     .thumb {
@@ -112,7 +120,6 @@
 
     .listing-head {
       padding: 8px 16px 12px;
-      flex-shrink: 0;
     }
 
     .price {
@@ -168,15 +175,8 @@
       background: var(--color-text-success);
     }
 
-    .chat-scroll {
-      flex: 1;
-      min-height: 0;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
     #chat {
-      padding: 0 16px;
+      padding: 0 16px 12px;
       display: flex;
       flex-direction: column;
     }
@@ -215,7 +215,7 @@
     }
 
     .handoff {
-      margin: 10px 16px 2px;
+      margin: 10px 16px 16px;
       padding: 12px;
       background: var(--color-background-secondary);
       border: 0.5px solid var(--color-border-tertiary);
@@ -271,16 +271,14 @@
       cursor: default;
     }
 
-    .footer {
-      position: sticky;
-      bottom: 0;
+    .composer {
+      flex-shrink: 0;
       background: #fff;
       border-top: 0.5px solid var(--color-border-tertiary);
       padding-bottom: env(safe-area-inset-bottom);
-      flex-shrink: 0;
     }
 
-    .composer {
+    .composer-form {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -350,39 +348,39 @@
   <div id="banner" class="banner hidden"></div>
 
   <div class="listing" id="app">
-    <div class="photo" aria-hidden="true">
-      <i class="ti ti-photo"></i>
-      <span class="photo-count">1 / 8</span>
-    </div>
-    <div class="thumbs" aria-hidden="true">
-      <div class="thumb active"></div>
-      <div class="thumb"></div>
-      <div class="thumb"></div>
-      <div class="thumb"></div>
-    </div>
-
-    <div class="listing-head">
-      <div class="price" id="price">—</div>
-      <div class="subtitle" id="subtitle">Cargando…</div>
-      <div class="stats" id="stats"></div>
-      <div class="assistant-bar">
-        <i class="ti ti-robot" aria-hidden="true"></i>
-        <span id="assistant-label">Asistente</span>
-        <span class="live">
-          <span class="live-dot"></span>
-          responde al instante
-        </span>
+    <div class="scroll" id="scroll">
+      <div class="photo" aria-hidden="true">
+        <i class="ti ti-photo"></i>
+        <span class="photo-count">1 / 8</span>
       </div>
-    </div>
+      <div class="thumbs" aria-hidden="true">
+        <div class="thumb active"></div>
+        <div class="thumb"></div>
+        <div class="thumb"></div>
+        <div class="thumb"></div>
+      </div>
 
-    <div class="chat-scroll">
+      <div class="listing-head">
+        <div class="price" id="price">—</div>
+        <div class="subtitle" id="subtitle">Cargando…</div>
+        <div class="stats" id="stats"></div>
+        <div class="assistant-bar">
+          <i class="ti ti-robot" aria-hidden="true"></i>
+          <span id="assistant-label">Asistente</span>
+          <span class="live">
+            <span class="live-dot"></span>
+            responde al instante
+          </span>
+        </div>
+      </div>
+
       <div id="chat" role="log" aria-live="polite" aria-relevant="additions"></div>
       <div id="handoff-slot"></div>
     </div>
 
-    <div class="footer">
+    <div class="composer">
       <div id="chips"></div>
-      <form class="composer" id="composer">
+      <form class="composer-form" id="composer">
         <input
           id="input"
           type="text"
@@ -423,7 +421,7 @@
       }
 
       var chat = document.getElementById("chat");
-      var chatScroll = document.querySelector(".chat-scroll");
+      var scrollEl = document.getElementById("scroll");
       var chipsEl = document.getElementById("chips");
       var handoffSlot = document.getElementById("handoff-slot");
       var input = document.getElementById("input");
@@ -466,7 +464,7 @@
         var greet =
           "¡Hola! Pregúntame lo que sea de este apartamento. Toca una pregunta o escríbeme — te respondo al instante.";
         chat.innerHTML = "";
-        chat.appendChild(mkBubble(greet, "agent"));
+        appendToChat(mkBubble(greet, "agent"));
 
         renderChips(DEFAULT_CHIPS);
         input.disabled = false;
@@ -494,8 +492,16 @@
         return d;
       }
 
-      function scrollChat() {
-        if (chatScroll) chatScroll.scrollTop = chatScroll.scrollHeight;
+      function scrollToBottom() {
+        requestAnimationFrame(function () {
+          if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
+        });
+      }
+
+      function appendToChat(node) {
+        chat.appendChild(node);
+        scrollToBottom();
+        return node;
       }
 
       function setBusy(on) {
@@ -526,7 +532,7 @@
         wrap.appendChild(p);
         wrap.appendChild(a);
         handoffSlot.appendChild(wrap);
-        scrollChat();
+        scrollToBottom();
       }
 
       async function sendMessage(text, chipBtn) {
@@ -538,16 +544,14 @@
           input.blur();
         }
 
-        chat.appendChild(mkBubble(q, "user"));
+        appendToChat(mkBubble(q, "user"));
         input.value = "";
         handoffSlot.innerHTML = "";
-        scrollChat();
 
         var typing = document.createElement("div");
         typing.className = "typing";
         typing.textContent = "•••";
-        chat.appendChild(typing);
-        scrollChat();
+        appendToChat(typing);
         setBusy(true);
 
         try {
@@ -565,26 +569,20 @@
           typing.remove();
 
           if (!res.ok) {
-            chat.appendChild(
-              mkBubble("Algo salió mal. Intenta de nuevo en un momento.", "agent"),
-            );
-            scrollChat();
+            appendToChat(mkBubble("Algo salió mal. Intenta de nuevo en un momento.", "agent"));
             return;
           }
 
-          chat.appendChild(mkBubble(data.reply, "agent"));
+          appendToChat(mkBubble(data.reply, "agent"));
 
           if (data.decision === "handoff" && data.whatsapp) {
             mkHandoff(data.whatsapp);
           }
-
-          scrollChat();
         } catch (_) {
           typing.remove();
-          chat.appendChild(
+          appendToChat(
             mkBubble("No pude conectar. Revisa tu internet e intenta de nuevo.", "agent"),
           );
-          scrollChat();
         } finally {
           setBusy(false);
           if (!chipBtn) input.focus();
