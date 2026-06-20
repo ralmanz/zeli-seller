@@ -361,27 +361,25 @@
       border-top: 0.5px solid var(--border);
     }
 
-    #chips {
+    .chat-chips-row {
       display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
+      gap: 11px;
+      align-items: flex-start;
+      margin: -12px 0 24px;
       padding: 0 20px;
-      max-height: 0;
-      opacity: 0;
-      overflow: hidden;
-      pointer-events: none;
-      transition: max-height 0.22s ease, opacity 0.18s ease, padding 0.22s ease;
     }
 
-    #chips.chips-visible {
-      max-height: 96px;
-      opacity: 1;
-      padding: 6px 20px 2px;
-      pointer-events: auto;
+    .chat-chips-spacer {
+      width: 28px;
+      flex-shrink: 0;
     }
 
-    #chips.chips-dismissed {
-      display: none;
+    .chat-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
     }
 
     .chip {
@@ -514,7 +512,6 @@
     </div>
 
     <div class="composer">
-      <div id="chips"></div>
       <form class="composer-form" id="composer">
         <input
           id="input"
@@ -588,8 +585,9 @@
         listing: null,
         conversationId: null,
         busy: false,
-        chipsDismissed: false,
       };
+
+      var chipsRow = null;
 
       function ensureConversation(id) {
         var key = "zeli-conv-" + id;
@@ -603,7 +601,6 @@
 
       var chat = document.getElementById("chat");
       var scrollEl = document.getElementById("scroll");
-      var chipsEl = document.getElementById("chips");
       var handoffSlot = document.getElementById("handoff-slot");
       var input = document.getElementById("input");
       var sendBtn = document.getElementById("send");
@@ -726,34 +723,35 @@
         var greet =
           "¡Hola! Soy Zeli, la asistente personal de " + principal +
           ". Pregúntame lo que sea de este apartamento — te respondo al instante.";
+        chipsRow = null;
         chat.innerHTML = "";
         appendToChat(mkTurn(greet, "agent"), { scroll: false });
-
         renderChips(DEFAULT_CHIPS);
-        updateChipsVisibility();
         input.disabled = false;
         sendBtn.disabled = false;
       }
 
-      function dismissChips() {
-        state.chipsDismissed = true;
-        chipsEl.classList.add("chips-dismissed");
-        chipsEl.classList.remove("chips-visible");
-      }
-
-      function updateChipsVisibility() {
-        if (state.chipsDismissed || !chipsEl.children.length) return;
-        if (scrollEl.scrollTop > 160) {
-          chipsEl.classList.add("chips-visible");
-        } else {
-          chipsEl.classList.remove("chips-visible");
+      function clearChips() {
+        if (chipsRow) {
+          chipsRow.remove();
+          chipsRow = null;
         }
       }
 
-      scrollEl.addEventListener("scroll", updateChipsVisibility, { passive: true });
-
       function renderChips(labels) {
-        chipsEl.innerHTML = "";
+        clearChips();
+        chipsRow = document.createElement("div");
+        chipsRow.className = "chat-chips-row";
+        chipsRow.setAttribute("role", "group");
+        chipsRow.setAttribute("aria-label", "Preguntas sugeridas");
+
+        var spacer = document.createElement("div");
+        spacer.className = "chat-chips-spacer";
+        spacer.setAttribute("aria-hidden", "true");
+
+        var wrap = document.createElement("div");
+        wrap.className = "chat-chips";
+
         labels.forEach(function (label) {
           var btn = document.createElement("button");
           btn.type = "button";
@@ -762,8 +760,12 @@
           btn.addEventListener("click", function () {
             sendMessage(label, btn);
           });
-          chipsEl.appendChild(btn);
+          wrap.appendChild(btn);
         });
+
+        chipsRow.appendChild(spacer);
+        chipsRow.appendChild(wrap);
+        chat.appendChild(chipsRow);
       }
 
       function scrollToBottom() {
@@ -823,7 +825,7 @@
           input.blur();
         }
 
-        if (!state.chipsDismissed) dismissChips();
+        clearChips();
 
         appendToChat(mkTurn(q, "user"));
         input.value = "";
