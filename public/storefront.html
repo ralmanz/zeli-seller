@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Inmuebles</title>
+<style>
+  :root {
+    --green: #0F3D2E;
+    --gold:  #C9A23F;
+    --cream: #F4F0E4;
+    --ink:   #1c2420;
+    --muted: #6b746e;
+    --line:  #e7e2d4;
+    --card:  #ffffff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+    background: rgba(244,240,228,.85);
+    backdrop-filter: blur(10px);
+    border-bottom: .5px solid var(--line);
+  }
+  .brand { font-weight: 650; font-size: 16px; color: var(--green); letter-spacing: -.01em; }
+  .share {
+    appearance: none; border: .5px solid var(--line); background: var(--card);
+    color: var(--green); width: 38px; height: 38px; border-radius: 50%;
+    font-size: 17px; cursor: pointer; display: grid; place-items: center;
+  }
+  .share:active { transform: scale(.95); }
+
+  main { flex: 1; width: 100%; max-width: 720px; margin: 0 auto; padding: 18px 16px 8px; }
+  .lede { color: var(--muted); font-size: 14px; margin: 2px 0 18px; }
+  .lede strong { color: var(--ink); font-weight: 600; }
+
+  .grid { display: grid; gap: 14px; }
+
+  .card {
+    display: block; text-decoration: none; color: inherit;
+    background: var(--card); border: .5px solid var(--line);
+    border-radius: 16px; overflow: hidden;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .card:active { transform: scale(.992); }
+  @media (hover: hover) {
+    .card:hover { box-shadow: 0 8px 28px rgba(15,61,46,.10); }
+  }
+
+  .cover { position: relative; aspect-ratio: 16 / 10; background: #ece8db; }
+  .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .badge {
+    position: absolute; top: 10px; left: 10px;
+    font-size: 11.5px; font-weight: 650; letter-spacing: .02em;
+    padding: 4px 9px; border-radius: 999px;
+    background: rgba(15,61,46,.92); color: #fff; text-transform: uppercase;
+  }
+  .badge.alquiler { background: rgba(201,162,63,.95); color: #2a2206; }
+
+  .body { padding: 13px 14px 15px; }
+  .price { font-weight: 700; font-size: 18px; color: var(--green); letter-spacing: -.01em; }
+  .loc { color: var(--muted); font-size: 14px; margin-top: 2px; }
+  .specs { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; color: var(--ink); font-size: 13.5px; }
+  .specs span { color: var(--muted); }
+  .specs b { font-weight: 600; color: var(--ink); }
+
+  .via {
+    text-align: center; padding: 22px 16px calc(26px + env(safe-area-inset-bottom));
+    color: var(--muted); font-size: 12.5px;
+  }
+  .via a { color: var(--muted); text-decoration: none; border-bottom: .5px solid var(--line); }
+  .via .z { color: var(--green); font-weight: 700; }
+  .via .dot { color: var(--gold); }
+
+  .state { padding: 48px 16px; text-align: center; color: var(--muted); }
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand" id="brand">&nbsp;</div>
+    <button class="share" id="share" aria-label="Compartir" title="Compartir">⤴</button>
+  </header>
+
+  <main>
+    <p class="lede" id="lede"></p>
+    <div class="grid" id="grid"></div>
+    <div class="state" id="state">Cargando…</div>
+  </main>
+
+  <footer class="via">
+    vía <a href="https://zeli.lat" target="_blank" rel="noopener">
+      <span class="z">Zeli</span><span class="dot">.</span>
+    </a>
+  </footer>
+
+<script>
+(function () {
+  var path = location.pathname.match(/\/b\/([^\/]+)/);
+  var brokerId = (path && decodeURIComponent(path[1])) ||
+                 new URLSearchParams(location.search).get("id");
+
+  var $brand = document.getElementById("brand");
+  var $lede  = document.getElementById("lede");
+  var $grid  = document.getElementById("grid");
+  var $state = document.getElementById("state");
+  var $share = document.getElementById("share");
+
+  if (!brokerId) { $state.textContent = "No encontramos esta página."; return; }
+
+  fetch("/api/brokers/" + encodeURIComponent(brokerId) + "/storefront")
+    .then(function (r) {
+      if (r.status === 404) throw new Error("not_found");
+      return r.json();
+    })
+    .then(function (data) {
+      if (data.redirect) { location.replace(data.redirect); return; }
+      render(data);
+    })
+    .catch(function () {
+      $state.textContent = "No encontramos esta página.";
+    });
+
+  function render(data) {
+    var agency = data.broker.agency || data.broker.name || "Inmuebles";
+    document.title = agency;
+    $brand.textContent = agency;
+
+    var n = data.listings.length;
+    $lede.innerHTML = "<strong>" + n + "</strong> inmuebles disponibles";
+
+    $state.style.display = "none";
+    $grid.innerHTML = "";
+    data.listings.forEach(function (l) { $grid.appendChild(card(l)); });
+
+    wireShare(agency);
+  }
+
+  function card(l) {
+    var a = document.createElement("a");
+    a.className = "card";
+    a.href = "/" + l.slug;
+
+    var cover = l.cover
+      ? '<img src="' + l.cover + '" alt="" loading="lazy" />'
+      : "";
+    var badge = l.operation === "alquiler"
+      ? '<span class="badge alquiler">Alquiler</span>'
+      : '<span class="badge">Venta</span>';
+
+    var specs = [];
+    if (l.beds   != null) specs.push("<b>" + l.beds + "</b> <span>rec</span>");
+    if (l.baths  != null) specs.push("<b>" + l.baths + "</b> <span>baños</span>");
+    if (l.area_m2 != null) specs.push("<b>" + l.area_m2 + "</b> <span>m²</span>");
+    if (l.parking != null) specs.push("<b>" + l.parking + "</b> <span>est.</span>");
+
+    a.innerHTML =
+      '<div class="cover">' + cover + badge + '</div>' +
+      '<div class="body">' +
+        '<div class="price">' + esc(l.price_label) + '</div>' +
+        '<div class="loc">' + esc(l.location) + '</div>' +
+        (specs.length ? '<div class="specs">' + specs.join("") + '</div>' : '') +
+      '</div>';
+    return a;
+  }
+
+  function wireShare(agency) {
+    $share.addEventListener("click", function () {
+      var payload = { title: agency, text: "Inmuebles de " + agency, url: location.href };
+      if (navigator.share) {
+        navigator.share(payload).catch(function () {});
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(location.href);
+        $share.textContent = "✓";
+        setTimeout(function () { $share.textContent = "⤴"; }, 1400);
+      }
+    });
+  }
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+})();
+</script>
+</body>
+</html>

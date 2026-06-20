@@ -6,10 +6,11 @@ INSERT OR IGNORE INTO brokers (id, name, agency, wa_number)
 VALUES ('broker-vega', 'Ana Vega', 'Inmobiliaria Vega', '50760001234');
 
 INSERT OR IGNORE INTO listings (
-  id, broker_id, operation, price, currency, location,
+  id, slug, broker_id, operation, price, currency, location,
   beds, baths, area_m2, parking, facts_json, status
 ) VALUES (
   'listing-sf-demo',
+  'san-francisco-venta',
   'broker-vega',
   'sale',
   189000,
@@ -20,6 +21,25 @@ INSERT OR IGNORE INTO listings (
   95,
   1,
   '["piscina","seguridad 24/7","área social"]',
+  'active'
+);
+
+INSERT OR IGNORE INTO listings (
+  id, slug, broker_id, operation, price, currency, location,
+  beds, baths, area_m2, parking, facts_json, status
+) VALUES (
+  'listing-pp-rent',
+  'punta-pacifica-alquiler',
+  'broker-vega',
+  'rent',
+  2200,
+  'USD',
+  'Punta Pacífica, Ciudad de Panamá',
+  1,
+  1,
+  68,
+  1,
+  '["vista al mar","amoblado","gym"]',
   'active'
 );
 

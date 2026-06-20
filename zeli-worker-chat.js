@@ -2,6 +2,7 @@
 // Cloudflare Worker — buyer chat gate, listing drafter, capture classifier.
 //
 //   GET  /api/listings/:id    -> public listing + broker display info (buyer UI)
+//                                (:id = listing id or slug)
 //
 //   POST /api/chat            { listingId, conversationId?, message }
 //                             -> { reply, decision, whatsapp? }
@@ -30,8 +31,13 @@
 //
 // Deploy: D1 binding DB, secret ANTHROPIC_API_KEY.
 // Tables: listings, brokers, knowledge, messages, escalations, leads
+//
+//   GET  /api/brokers/:id/storefront -> per-broker active listings (read-only)
 
 const MODEL = "claude-haiku-4-5-20251001";
+
+// R2 public bucket base; keys from listings.cover_r2_key
+const IMG_BASE = "https://img.zeli.lat/";
 
 const VALID_DECISIONS = new Set(["answer", "escalate", "route", "handoff"]);
 const VALID_INTENTS = new Set(["viewing", "offer", "financing", "none"]);
@@ -190,8 +196,13 @@ export default {
 
     if (path.startsWith("/api/")) {
       const listingGet = path.match(/^\/api\/listings\/([^/]+)$/);
+      const storefrontGet = path.match(/^\/api\/brokers\/([^/]+)\/storefront\/?$/);
+
+      if (request.method === "GET" && storefrontGet) {
+        return handleStorefront(env, decodeURIComponent(storefrontGet[1]));
+      }
       if (request.method === "GET" && listingGet) {
-        return handleGetListing(env, listingGet[1]);
+        return handleGetListing(env, decodeURIComponent(listingGet[1]));
       }
 
       if (request.method !== "POST") {
@@ -206,6 +217,12 @@ export default {
     }
 
     if (env.ASSETS) {
+      if (request.method === "GET" && /^\/b\/[^/]+\/?$/.test(path)) {
+        return env.ASSETS.fetch(
+          new Request(new URL("/storefront.html", url.origin), request),
+        );
+      }
+
       const asset = await env.ASSETS.fetch(request);
       if (asset.status !== 404) return asset;
       if (request.method === "GET" && !path.includes(".")) {
@@ -220,17 +237,19 @@ export default {
 
 // --- 1. The Gate (buyer chat) ------------------------------------------------
 
-async function handleGetListing(env, listingId) {
+async function handleGetListing(env, listingRef) {
   const row = await env.DB
     .prepare(
-      `SELECT l.id, l.operation, l.price, l.currency, l.location, l.beds, l.baths,
-              l.area_m2, l.parking, l.facts_json, l.status,
-              b.name AS broker_name, b.agency AS broker_agency
+      `SELECT l.id, l.slug, l.broker_id, l.operation, l.price, l.currency, l.location,
+              l.beds, l.baths, l.area_m2, l.parking, l.facts_json, l.status,
+              b.name AS broker_name, b.agency AS broker_agency,
+              (SELECT COUNT(*) FROM listings l2
+                 WHERE l2.broker_id = l.broker_id AND l2.status = 'active') AS active_count
        FROM listings l
        JOIN brokers b ON b.id = l.broker_id
-       WHERE l.id = ? AND l.status = 'active'`,
+       WHERE (l.id = ? OR l.slug = ?) AND l.status = 'active'`,
     )
-    .bind(listingId)
+    .bind(listingRef, listingRef)
     .first();
 
   if (!row) return json({ error: "listing not found" }, 404);
@@ -243,8 +262,9 @@ async function handleGetListing(env, listingId) {
     } catch (_) {}
   }
 
-  return json({
+  const payload = {
     id: row.id,
+    slug: row.slug || row.id,
     operation: row.operation,
     price: row.price,
     currency: row.currency || "USD",
@@ -255,10 +275,103 @@ async function handleGetListing(env, listingId) {
     parking: row.parking,
     facts,
     broker: {
+      id: row.broker_id,
       name: row.broker_name,
       agency: row.broker_agency,
     },
-  });
+  };
+
+  if (Number(row.active_count) > 1) {
+    payload.storefront = { href: `/b/${row.broker_id}` };
+  }
+
+  return json(payload);
+}
+
+// --- Storefront (read-only, per-broker) --------------------------------------
+
+async function handleStorefront(env, brokerId) {
+  try {
+    const broker = await env.DB
+      .prepare(
+        `SELECT id, name, agency, wa_number
+           FROM brokers
+          WHERE id = ?1`,
+      )
+      .bind(brokerId)
+      .first();
+
+    if (!broker) return json({ error: "not_found" }, 404);
+
+    const { results } = await env.DB
+      .prepare(
+        `SELECT slug, id, operation, price, location, beds, baths, area_m2, parking,
+                facts_json, cover_r2_key
+           FROM listings
+          WHERE broker_id = ?1 AND status = 'active'
+          ORDER BY COALESCE(updated_at, created_at) DESC`,
+      )
+      .bind(brokerId)
+      .all();
+
+    const rows = results || [];
+
+    if (rows.length === 0) return json({ error: "not_found" }, 404);
+
+    if (rows.length === 1) {
+      const slug = rows[0].slug || rows[0].id;
+      return jsonCached({ redirect: `/${slug}` });
+    }
+
+    return jsonCached({
+      broker: {
+        name: broker.name,
+        agency: broker.agency,
+        wa_number: broker.wa_number,
+      },
+      listings: rows.map(shapeStorefrontListing),
+    });
+  } catch (_) {
+    return json({ error: "server_error" }, 500);
+  }
+}
+
+function shapeStorefrontListing(r) {
+  let facts = {};
+  if (r.facts_json) {
+    try {
+      const parsed = JSON.parse(r.facts_json);
+      facts = Array.isArray(parsed) ? {} : parsed;
+    } catch (_) {}
+  }
+
+  const operation = storefrontOperation(r, facts);
+
+  return {
+    slug: r.slug || r.id,
+    title: facts.title || r.location || "",
+    location: r.location || "",
+    operation,
+    price_label: storefrontPriceLabel(r.price, operation),
+    beds: r.beds,
+    baths: r.baths,
+    area_m2: r.area_m2,
+    parking: r.parking,
+    cover: r.cover_r2_key ? IMG_BASE + r.cover_r2_key : null,
+  };
+}
+
+function storefrontOperation(row, facts) {
+  if (row.operation === "rent") return "alquiler";
+  if (row.operation === "sale") return "venta";
+  if (facts.operation === "alquiler" || facts.operation === "rent") return "alquiler";
+  return "venta";
+}
+
+function storefrontPriceLabel(price, operation) {
+  if (price == null) return "Consultar";
+  const n = Number(price).toLocaleString("en-US");
+  return operation === "alquiler" ? `$${n}/mes` : `$${n}`;
 }
 
 async function handleChat(request, env) {
@@ -543,15 +656,17 @@ async function handlePublishListing(request, env) {
     }
 
     const listingId = crypto.randomUUID();
+    const slug = defaultListingSlug(listingId, fields.location);
     await env.DB
       .prepare(
         `INSERT INTO listings (
-          id, broker_id, operation, price, currency, location,
+          id, slug, broker_id, operation, price, currency, location,
           beds, baths, area_m2, parking, facts_json, status, created_at
-        ) VALUES (?, ?, ?, ?, 'USD', ?, ?, ?, ?, ?, ?, 'active', datetime('now'))`,
+        ) VALUES (?, ?, ?, ?, ?, 'USD', ?, ?, ?, ?, ?, ?, 'active', datetime('now'))`,
       )
       .bind(
         listingId,
+        slug,
         brokerId,
         fields.operation,
         fields.price,
@@ -758,10 +873,12 @@ async function callAnthropic(env, { system, userMessage, schema, temperature, ma
 
 // --- context assembly --------------------------------------------------------
 
-async function loadContext(env, listingId) {
+async function loadContext(env, listingRef) {
   const listing = await env.DB
-    .prepare("SELECT * FROM listings WHERE id = ? AND status = 'active'")
-    .bind(listingId)
+    .prepare(
+      "SELECT * FROM listings WHERE (id = ? OR slug = ?) AND status = 'active'",
+    )
+    .bind(listingRef, listingRef)
     .first();
   if (!listing) return null;
 
@@ -769,6 +886,8 @@ async function loadContext(env, listingId) {
     .prepare("SELECT * FROM brokers WHERE id = ?")
     .bind(listing.broker_id)
     .first();
+
+  const listingId = listing.id;
 
   // Newest first — latest broker statement wins on conflicts.
   const known = (await env.DB
@@ -906,4 +1025,27 @@ function json(obj, status = 200) {
     status,
     headers: { "content-type": "application/json", ...corsHeaders() },
   });
+}
+
+function jsonCached(obj, status = 200) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: {
+      "content-type": "application/json",
+      ...corsHeaders(),
+      "cache-control": "public, max-age=60",
+    },
+  });
+}
+
+function defaultListingSlug(id, location) {
+  if (!location) return id;
+  const slug = String(location)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 48);
+  return slug || id;
 }

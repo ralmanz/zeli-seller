@@ -12,21 +12,23 @@ CREATE TABLE IF NOT EXISTS brokers (
 );
 
 CREATE TABLE IF NOT EXISTS listings (
-  id          TEXT PRIMARY KEY,
-  broker_id   TEXT NOT NULL REFERENCES brokers(id),
-  operation   TEXT CHECK (operation IN ('sale', 'rent')),
-  price       REAL,
-  currency    TEXT NOT NULL DEFAULT 'USD',
-  location    TEXT,
-  beds        INTEGER,
-  baths       REAL,
-  area_m2     REAL,
-  parking     INTEGER,
-  facts_json  TEXT,
-  status      TEXT NOT NULL DEFAULT 'draft'
-                CHECK (status IN ('draft', 'active', 'archived')),
-  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at  TEXT
+  id            TEXT PRIMARY KEY,
+  slug          TEXT UNIQUE,
+  broker_id     TEXT NOT NULL REFERENCES brokers(id),
+  operation     TEXT CHECK (operation IN ('sale', 'rent')),
+  price         REAL,
+  currency      TEXT NOT NULL DEFAULT 'USD',
+  location      TEXT,
+  beds          INTEGER,
+  baths         REAL,
+  area_m2       REAL,
+  parking       INTEGER,
+  facts_json    TEXT,
+  cover_r2_key  TEXT,
+  status        TEXT NOT NULL DEFAULT 'draft'
+                  CHECK (status IN ('draft', 'active', 'archived')),
+  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at    TEXT
 );
 
 CREATE TABLE IF NOT EXISTS knowledge (

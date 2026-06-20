@@ -4,22 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Smart Listing</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --color-background-primary: #ffffff;
-      --color-background-secondary: #f4f4f5;
-      --color-background-info: #e8f0fe;
-      --color-border-secondary: #d4d4d8;
-      --color-border-tertiary: #e4e4e7;
-      --color-text-primary: #18181b;
-      --color-text-secondary: #52525b;
-      --color-text-tertiary: #a1a1aa;
-      --color-text-info: #1a4fd6;
-      --color-text-success: #3b6d11;
-      --border-radius-md: 8px;
-      --border-radius-lg: 12px;
-      --border-radius-xl: 16px;
+      --bg: #ffffff;
+      --bg-soft: #f4f4f5;
+      --bubble: #f1f1f0;
+      --text: #18181b;
+      --text-2: #6b7280;
+      --text-3: #a1a1aa;
+      --border: #ececec;
+      --accent: #0F3D2E;
+      --gold: #C9A23F;
     }
 
     * { box-sizing: border-box; }
@@ -35,9 +33,10 @@
 
     body {
       background: #fff;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      color: var(--color-text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      color: var(--text);
       -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
 
     .sr-only {
@@ -58,7 +57,96 @@
       height: 100dvh;
       max-width: 480px;
       margin: 0 auto;
-      background: #fff;
+      background: var(--bg);
+    }
+
+    .topbar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+      background: var(--bg);
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .topbar-start {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-lockup {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+
+    .zeli-mark {
+      display: block;
+      line-height: 0;
+      flex-shrink: 0;
+    }
+
+    .zeli-mark svg {
+      width: 28px;
+      height: 28px;
+      display: block;
+    }
+
+    .zeli-word {
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      color: var(--accent);
+      letter-spacing: -0.03em;
+      text-transform: lowercase;
+      line-height: 1;
+    }
+
+    .brand {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .topbar-meta {
+      min-width: 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .mas-de {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text-3);
+      text-decoration: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mas-de:hover { text-decoration: underline; }
+
+    .share {
+      flex-shrink: 0;
+      border: none;
+      background: transparent;
+      font-size: 20px;
+      line-height: 1;
+      padding: 6px;
+      cursor: pointer;
+      color: var(--text);
     }
 
     .scroll {
@@ -75,7 +163,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--color-background-secondary);
+      background: var(--bg-soft);
+      color: var(--text-3);
     }
 
     .photo img {
@@ -85,20 +174,15 @@
       display: block;
     }
 
-    .photo .ti-photo {
-      font-size: 40px;
-      color: var(--color-text-tertiary);
-    }
-
     .photo-count {
       position: absolute;
       top: 10px;
       right: 10px;
-      background: rgba(0, 0, 0, 0.55);
+      background: rgba(24, 24, 27, 0.55);
       color: #fff;
       font-size: 12px;
       padding: 3px 8px;
-      border-radius: var(--border-radius-md);
+      border-radius: 8px;
     }
 
     .thumbs {
@@ -110,123 +194,144 @@
     .thumb {
       flex: 1;
       height: 38px;
-      background: var(--color-background-secondary);
+      background: var(--bg-soft);
       border-radius: 6px;
     }
 
     .thumb.active {
-      border: 1.5px solid var(--color-border-secondary);
+      border: 0.5px solid #e3e3e6;
     }
 
     .listing-head {
-      padding: 8px 16px 12px;
+      padding: 18px 20px 14px;
     }
 
     .price {
-      font-size: 22px;
-      font-weight: 500;
-      color: var(--color-text-primary);
+      font-size: 23px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text);
     }
 
-    .subtitle {
+    .facts-line {
       font-size: 14px;
-      color: var(--color-text-secondary);
-      margin-top: 2px;
+      color: var(--text-2);
+      margin-top: 4px;
     }
 
-    .stats {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 14px;
-      margin-top: 10px;
-      font-size: 13px;
-      color: var(--color-text-secondary);
-    }
-
-    .stats i {
-      font-size: 16px;
-      vertical-align: -2px;
-      margin-right: 4px;
-    }
-
-    .assistant-bar {
+    .who {
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-top: 12px;
-      padding-top: 10px;
-      border-top: 0.5px solid var(--color-border-tertiary);
-      font-size: 12px;
-      color: var(--color-text-tertiary);
+      gap: 10px;
+      padding: 0 20px 16px;
+      border-bottom: 0.5px solid var(--border);
     }
 
-    .assistant-bar .live {
+    .who .name {
+      font-size: 14px;
+      color: var(--text-2);
+    }
+
+    .who .status {
+      margin-left: auto;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      margin-left: auto;
-      color: var(--color-text-success);
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-3);
     }
 
-    .live-dot {
-      width: 7px;
-      height: 7px;
+    .dot {
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      background: var(--color-text-success);
+      background: var(--text-3);
+    }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+      line-height: 0;
+    }
+
+    .avatar svg {
+      width: 28px;
+      height: 28px;
+      display: block;
+    }
+
+    .avatar.sm svg {
+      width: 26px;
+      height: 26px;
+    }
+
+    .avatar.sm {
+      width: 26px;
+      height: 26px;
     }
 
     #chat {
-      padding: 0 16px 12px;
+      padding: 22px 20px 8px;
       display: flex;
       flex-direction: column;
     }
 
-    .bubble {
-      max-width: 82%;
-      padding: 8px 12px;
-      font-size: 13.5px;
-      line-height: 1.5;
-      margin-top: 8px;
+    .turn-bot {
+      display: flex;
+      gap: 11px;
+      align-items: flex-start;
+      margin-bottom: 24px;
     }
 
-    .bubble.user {
-      align-self: flex-end;
-      background: var(--color-background-info);
-      color: var(--color-text-info);
-      border-radius: 14px 14px 4px 14px;
+    .turn-bot .body {
+      font-size: 15.5px;
+      line-height: 1.55;
+      color: var(--text);
+      max-width: 86%;
+      padding-top: 2px;
     }
 
-    .bubble.agent {
-      align-self: flex-start;
-      background: var(--color-background-secondary);
-      color: var(--color-text-primary);
-      border-radius: 14px 14px 14px 4px;
+    .turn-user {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 24px;
     }
 
-    .typing {
-      align-self: flex-start;
-      background: var(--color-background-secondary);
-      color: var(--color-text-tertiary);
-      border-radius: 14px;
-      padding: 8px 14px;
-      font-size: 14px;
-      margin-top: 8px;
+    .turn-user .body {
+      background: var(--bubble);
+      color: var(--text);
+      padding: 11px 15px;
+      border-radius: 20px 20px 6px 20px;
+      font-size: 15.5px;
+      line-height: 1.55;
+      max-width: 78%;
+    }
+
+    .typing-dots {
+      color: var(--text-3);
       letter-spacing: 3px;
     }
 
-    .handoff {
-      margin: 10px 16px 16px;
-      padding: 12px;
-      background: var(--color-background-secondary);
-      border: 0.5px solid var(--color-border-tertiary);
-      border-radius: 12px;
+    #handoff-slot {
+      padding: 0 20px 8px;
+    }
+
+    .handoff-turn {
+      margin-bottom: 24px;
+    }
+
+    .handoff-turn .handoff {
+      flex: 1;
+      max-width: 86%;
+      padding-top: 2px;
     }
 
     .handoff p {
-      font-size: 13px;
-      color: var(--color-text-secondary);
-      line-height: 1.5;
-      margin: 0 0 10px;
+      font-size: 15.5px;
+      line-height: 1.55;
+      color: var(--text);
+      margin: 0 0 12px;
     }
 
     .wa-btn {
@@ -235,33 +340,37 @@
       justify-content: center;
       gap: 8px;
       width: 100%;
-      background: #3b6d11;
-      color: #fff;
-      border: none;
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 14px;
+      background: var(--bg);
+      color: var(--text);
+      border: 0.5px solid #e3e3e6;
+      padding: 11px 15px;
+      border-radius: 20px;
+      font-size: 15px;
       font-weight: 500;
       text-decoration: none;
       cursor: pointer;
     }
 
-    .wa-btn .ti-brand-whatsapp { font-size: 18px; }
+    .composer {
+      flex-shrink: 0;
+      background: var(--bg);
+      border-top: 0.5px solid var(--border);
+    }
 
     #chips {
       display: flex;
-      gap: 6px;
+      gap: 8px;
       flex-wrap: wrap;
-      padding: 8px 16px 4px;
+      padding: 8px 20px 4px;
     }
 
     .chip {
-      font-size: 12.5px;
-      color: var(--color-text-secondary);
-      border: 0.5px solid var(--color-border-secondary);
-      background: transparent;
-      border-radius: 16px;
-      padding: 5px 11px;
+      font-size: 14px;
+      color: var(--text-2);
+      border: 0.5px solid #e3e3e6;
+      background: var(--bg);
+      border-radius: 20px;
+      padding: 8px 15px;
       cursor: pointer;
       font-family: inherit;
     }
@@ -271,43 +380,36 @@
       cursor: default;
     }
 
-    .composer {
-      flex-shrink: 0;
-      background: #fff;
-      border-top: 0.5px solid var(--color-border-tertiary);
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-
     .composer-form {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 10px 16px;
+      gap: 10px;
+      padding: 12px 20px calc(16px + env(safe-area-inset-bottom));
     }
 
     #input {
       flex: 1;
-      height: 40px;
-      background: var(--color-background-secondary);
-      border: 0.5px solid var(--color-border-tertiary);
-      border-radius: 20px;
-      padding: 0 14px;
-      color: var(--color-text-primary);
+      height: 46px;
+      border: 0.5px solid #e3e3e6;
+      border-radius: 23px;
+      padding: 0 18px;
+      color: var(--text);
+      background: var(--bg);
       font-family: inherit;
       outline: none;
     }
 
-    #input::placeholder { color: var(--color-text-tertiary); }
+    #input::placeholder { color: var(--text-3); }
 
     #input:disabled { opacity: 0.6; }
 
     #send {
-      width: 38px;
-      height: 38px;
+      width: 46px;
+      height: 46px;
       border-radius: 50%;
       border: none;
-      background: var(--color-background-info);
-      color: var(--color-text-info);
+      background: var(--accent);
+      color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -320,23 +422,19 @@
       cursor: default;
     }
 
-    #send .ti-arrow-up { font-size: 18px; }
-
     .banner {
       max-width: 480px;
       margin: 0 auto;
       padding: 12px 16px;
-      background: #fef3c7;
-      border-bottom: 1px solid #fcd34d;
+      background: var(--bg-soft);
+      border-bottom: 0.5px solid var(--border);
       font-size: 13px;
-      color: #92400e;
+      color: var(--text-2);
       line-height: 1.45;
     }
 
     .banner.error {
-      background: #fee2e2;
-      border-color: #fca5a5;
-      color: #991b1b;
+      color: var(--text);
     }
 
     .hidden { display: none !important; }
@@ -348,9 +446,26 @@
   <div id="banner" class="banner hidden"></div>
 
   <div class="listing" id="app">
+    <header class="topbar">
+      <div class="topbar-start">
+        <div class="logo-lockup" aria-hidden="true">
+          <span class="zeli-mark" id="top-mark"></span>
+          <span class="zeli-word">zeli</span>
+        </div>
+        <div class="topbar-meta">
+          <div class="brand" id="brand">…</div>
+          <a id="mas-de" class="mas-de hidden" href="#">más de …</a>
+        </div>
+      </div>
+      <button type="button" class="share" id="share-btn" aria-label="Compartir">⤴</button>
+    </header>
     <div class="scroll" id="scroll">
       <div class="photo" aria-hidden="true">
-        <i class="ti ti-photo"></i>
+        <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="3"/>
+          <circle cx="8.5" cy="8.5" r="1.6"/>
+          <path d="M21 15l-5-5L5 21"/>
+        </svg>
         <span class="photo-count">1 / 8</span>
       </div>
       <div class="thumbs" aria-hidden="true">
@@ -362,16 +477,16 @@
 
       <div class="listing-head">
         <div class="price" id="price">—</div>
-        <div class="subtitle" id="subtitle">Cargando…</div>
-        <div class="stats" id="stats"></div>
-        <div class="assistant-bar">
-          <i class="ti ti-robot" aria-hidden="true"></i>
-          <span id="assistant-label">Zeli</span>
-          <span class="live">
-            <span class="live-dot"></span>
-            responde al instante
-          </span>
-        </div>
+        <div class="facts-line" id="facts-line">Cargando…</div>
+      </div>
+
+      <div class="who">
+        <div class="avatar sm" id="who-mark" aria-hidden="true"></div>
+        <span class="name" id="assistant-label">Zeli</span>
+        <span class="status">
+          <span class="dot"></span>
+          en línea
+        </span>
       </div>
 
       <div id="chat" role="log" aria-live="polite" aria-relevant="additions"></div>
@@ -390,7 +505,9 @@
           disabled
         >
         <button type="submit" id="send" aria-label="Enviar" disabled>
-          <i class="ti ti-arrow-up" aria-hidden="true"></i>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 19V5M5 12l7-7 7 7"/>
+          </svg>
         </button>
       </form>
     </div>
@@ -405,19 +522,62 @@
         "¿Puedo verlo este fin?",
       ];
 
+      var ZELI_MARK_INNER =
+        '<circle cx="50" cy="50" r="47" fill="#F4F0E4" stroke="rgba(15,61,46,0.28)" stroke-width="3"/>' +
+        '<rect x="24" y="29" width="52" height="11" rx="3" fill="#0F3D2E"/>' +
+        '<rect x="24" y="60" width="52" height="11" rx="3" fill="#0F3D2E"/>' +
+        '<polygon points="62,40 76,40 38,60 24,60" fill="#0F3D2E"/>' +
+        '<circle cx="66" cy="47" r="4" fill="#C9A23F"/>';
+
+      function zeliMarkSvg(size) {
+        return (
+          '<svg viewBox="0 0 100 100" width="' + size + '" height="' + size + '" aria-hidden="true">' +
+          ZELI_MARK_INNER +
+          "</svg>"
+        );
+      }
+
+      function mountZeliMark(el, size) {
+        el.innerHTML = zeliMarkSvg(size);
+      }
+
+      mountZeliMark(document.getElementById("top-mark"), 28);
+      mountZeliMark(document.getElementById("who-mark"), 26);
+
       var params = new URLSearchParams(location.search);
-      var listingId = params.get("listing") || params.get("listingId") || "listing-sf-demo";
-      var conversationKey = "zeli-conv-" + listingId;
+
+      function resolveListingRef() {
+        var fromQuery = params.get("listing") || params.get("listingId");
+        if (fromQuery) return fromQuery;
+        var path = location.pathname.replace(/^\//, "").replace(/\/$/, "");
+        if (
+          path &&
+          path !== "index.html" &&
+          path !== "storefront.html" &&
+          !path.startsWith("b/")
+        ) {
+          return decodeURIComponent(path);
+        }
+        return "listing-sf-demo";
+      }
+
+      var listingRef = resolveListingRef();
+      var listingId = listingRef;
 
       var state = {
         listing: null,
-        conversationId: sessionStorage.getItem(conversationKey),
+        conversationId: null,
         busy: false,
       };
 
-      if (!state.conversationId) {
-        state.conversationId = crypto.randomUUID();
-        sessionStorage.setItem(conversationKey, state.conversationId);
+      function ensureConversation(id) {
+        var key = "zeli-conv-" + id;
+        var cid = sessionStorage.getItem(key);
+        if (!cid) {
+          cid = crypto.randomUUID();
+          sessionStorage.setItem(key, cid);
+        }
+        state.conversationId = cid;
       }
 
       var chat = document.getElementById("chat");
@@ -428,6 +588,79 @@
       var sendBtn = document.getElementById("send");
       var banner = document.getElementById("banner");
       var composer = document.getElementById("composer");
+      var shareBtn = document.getElementById("share-btn");
+
+      function mkAvatar() {
+        var el = document.createElement("div");
+        el.className = "avatar";
+        el.setAttribute("aria-hidden", "true");
+        el.innerHTML = zeliMarkSvg(28);
+        return el;
+      }
+
+      function mkTurn(text, who) {
+        var turn = document.createElement("div");
+        var body = document.createElement("div");
+        body.className = "body";
+        body.textContent = text;
+
+        if (who === "user") {
+          turn.className = "turn-user";
+          turn.appendChild(body);
+        } else {
+          turn.className = "turn-bot";
+          turn.appendChild(mkAvatar());
+          turn.appendChild(body);
+        }
+        return turn;
+      }
+
+      function mkTyping() {
+        var turn = document.createElement("div");
+        turn.className = "turn-bot";
+        turn.appendChild(mkAvatar());
+        var body = document.createElement("div");
+        body.className = "body typing-dots";
+        body.textContent = "•••";
+        turn.appendChild(body);
+        return turn;
+      }
+
+      function shareListing() {
+        var url = location.href;
+        var business =
+          (state.listing && state.listing.broker && state.listing.broker.agency) ||
+          document.getElementById("brand").textContent;
+        var price = document.getElementById("price").textContent;
+        var factsLine = document.getElementById("facts-line").textContent;
+        var payload = {
+          title: business + " — " + price,
+          text: factsLine,
+          url: url,
+        };
+
+        if (navigator.share) {
+          navigator.share(payload).catch(function (err) {
+            if (err && err.name !== "AbortError") copyShareLink(url);
+          });
+        } else {
+          copyShareLink(url);
+        }
+      }
+
+      function copyShareLink(url) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(function () {
+            showBanner("Enlace copiado — compártelo por WhatsApp.", false);
+          }).catch(function () {
+            showBanner(url, false);
+          });
+        } else {
+          showBanner(url, false);
+        }
+      }
+
+      shareBtn.addEventListener("click", shareListing);
 
       function showBanner(text, isError) {
         banner.textContent = text;
@@ -440,33 +673,40 @@
         return "$" + Number(n).toLocaleString("en-US");
       }
 
-      function fmtStat(icon, label) {
-        return "<span><i class=\"ti ti-" + icon + "\" aria-hidden=\"true\"></i>" + label + "</span>";
+      function fmtFactsLine(data) {
+        var parts = [];
+        if (data.beds != null) parts.push(data.beds + " recámaras");
+        if (data.location) parts.push(data.location);
+        if (data.area_m2 != null) parts.push(data.area_m2 + " m²");
+        return parts.length ? parts.join(" · ") : "Panamá";
       }
 
       function renderListing(data) {
         document.getElementById("price").textContent = fmtPrice(data.price);
+        document.getElementById("facts-line").textContent = fmtFactsLine(data);
 
-        var bedsLabel = data.beds != null ? data.beds + " recámaras" : "Propiedad";
-        document.getElementById("subtitle").textContent =
-          bedsLabel + " · " + (data.location || "Panamá");
+        var business =
+          data.broker && data.broker.agency ? data.broker.agency : "Inmobiliaria";
+        document.getElementById("brand").textContent = business;
 
-        var stats = [];
-        if (data.beds != null) stats.push(fmtStat("bed", data.beds + " rec"));
-        if (data.baths != null) stats.push(fmtStat("bath", data.baths + " baños"));
-        if (data.area_m2 != null) stats.push(fmtStat("ruler-2", data.area_m2 + " m²"));
-        if (data.parking != null) stats.push(fmtStat("car", data.parking + " est."));
-        document.getElementById("stats").innerHTML = stats.join("");
+        var masDe = document.getElementById("mas-de");
+        if (data.storefront && data.storefront.href) {
+          masDe.textContent = "más de " + business;
+          masDe.href = data.storefront.href;
+          masDe.classList.remove("hidden");
+        } else {
+          masDe.classList.add("hidden");
+        }
 
         var principal = data.broker && data.broker.name ? data.broker.name : "el corredor";
         document.getElementById("assistant-label").textContent =
-          "Zeli · asistente de " + principal + ".";
+          "Zeli · asistente de " + principal;
 
         var greet =
           "¡Hola! Soy Zeli, la asistente personal de " + principal +
           ". Pregúntame lo que sea de este apartamento — te respondo al instante.";
         chat.innerHTML = "";
-        appendToChat(mkBubble(greet, "agent"));
+        appendToChat(mkTurn(greet, "agent"));
 
         renderChips(DEFAULT_CHIPS);
         input.disabled = false;
@@ -485,13 +725,6 @@
           });
           chipsEl.appendChild(btn);
         });
-      }
-
-      function mkBubble(text, who) {
-        var d = document.createElement("div");
-        d.className = "bubble " + who;
-        d.textContent = text;
-        return d;
       }
 
       function scrollToBottom() {
@@ -514,8 +747,12 @@
 
       function mkHandoff(whatsappUrl) {
         handoffSlot.innerHTML = "";
-        var wrap = document.createElement("div");
-        wrap.className = "handoff";
+        var turn = document.createElement("div");
+        turn.className = "turn-bot handoff-turn";
+        turn.appendChild(mkAvatar());
+
+        var card = document.createElement("div");
+        card.className = "handoff";
 
         var p = document.createElement("p");
         var broker = state.listing && state.listing.broker;
@@ -528,12 +765,12 @@
         a.href = whatsappUrl;
         a.target = "_blank";
         a.rel = "noopener noreferrer";
-        a.innerHTML =
-          '<i class="ti ti-brand-whatsapp" aria-hidden="true"></i>Continuar en WhatsApp';
+        a.textContent = "Continuar en WhatsApp";
 
-        wrap.appendChild(p);
-        wrap.appendChild(a);
-        handoffSlot.appendChild(wrap);
+        card.appendChild(p);
+        card.appendChild(a);
+        turn.appendChild(card);
+        handoffSlot.appendChild(turn);
         scrollToBottom();
       }
 
@@ -546,13 +783,11 @@
           input.blur();
         }
 
-        appendToChat(mkBubble(q, "user"));
+        appendToChat(mkTurn(q, "user"));
         input.value = "";
         handoffSlot.innerHTML = "";
 
-        var typing = document.createElement("div");
-        typing.className = "typing";
-        typing.textContent = "•••";
+        var typing = mkTyping();
         appendToChat(typing);
         setBusy(true);
 
@@ -571,11 +806,11 @@
           typing.remove();
 
           if (!res.ok) {
-            appendToChat(mkBubble("Algo salió mal. Intenta de nuevo en un momento.", "agent"));
+            appendToChat(mkTurn("Algo salió mal. Intenta de nuevo en un momento.", "agent"));
             return;
           }
 
-          appendToChat(mkBubble(data.reply, "agent"));
+          appendToChat(mkTurn(data.reply, "agent"));
 
           if (data.decision === "handoff" && data.whatsapp) {
             mkHandoff(data.whatsapp);
@@ -583,7 +818,7 @@
         } catch (_) {
           typing.remove();
           appendToChat(
-            mkBubble("No pude conectar. Revisa tu internet e intenta de nuevo.", "agent"),
+            mkTurn("No pude conectar. Revisa tu internet e intenta de nuevo.", "agent"),
           );
         } finally {
           setBusy(false);
@@ -598,27 +833,34 @@
 
       async function init() {
         try {
-          var res = await fetch("/api/listings/" + encodeURIComponent(listingId));
+          var res = await fetch("/api/listings/" + encodeURIComponent(listingRef));
           var data = await res.json();
 
           if (!res.ok) {
             showBanner(
-              "Listing no encontrado. Usa ?listing=ID en la URL. Demo: ?listing=listing-sf-demo",
+              "Listing no encontrado. Usa ?listing=ID en la URL o /slug en la ruta.",
               true,
             );
-            document.getElementById("subtitle").textContent = "Listing no disponible";
+            document.getElementById("facts-line").textContent = "Listing no disponible";
             return;
           }
 
           state.listing = data;
+          listingId = data.id;
+          ensureConversation(listingId);
           renderListing(data);
 
-          if (listingId === "listing-sf-demo" && !params.get("listing") && !params.get("listingId")) {
+          if (
+            listingRef === "listing-sf-demo" &&
+            !params.get("listing") &&
+            !params.get("listingId") &&
+            location.pathname.replace(/^\//, "") === ""
+          ) {
             showBanner("Demo: listing-sf-demo. Agrega ?listing=TU_ID para otro listing.");
           }
         } catch (_) {
           showBanner("No se pudo cargar el listing. ¿Está corriendo el worker?", true);
-          document.getElementById("subtitle").textContent = "Error de conexión";
+          document.getElementById("facts-line").textContent = "Error de conexión";
         }
       }
 
