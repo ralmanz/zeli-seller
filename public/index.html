@@ -361,16 +361,32 @@
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
-      padding: 8px 20px 4px;
+      padding: 0 20px;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      pointer-events: none;
+      transition: max-height 0.22s ease, opacity 0.18s ease, padding 0.22s ease;
+    }
+
+    #chips.chips-visible {
+      max-height: 96px;
+      opacity: 1;
+      padding: 6px 20px 2px;
+      pointer-events: auto;
+    }
+
+    #chips.chips-dismissed {
+      display: none;
     }
 
     .chip {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--text-2);
       border: 0.5px solid #e3e3e6;
       background: var(--bg);
       border-radius: 20px;
-      padding: 8px 15px;
+      padding: 7px 13px;
       cursor: pointer;
       font-family: inherit;
     }
@@ -568,6 +584,7 @@
         listing: null,
         conversationId: null,
         busy: false,
+        chipsDismissed: false,
       };
 
       function ensureConversation(id) {
@@ -706,12 +723,30 @@
           "¡Hola! Soy Zeli, la asistente personal de " + principal +
           ". Pregúntame lo que sea de este apartamento — te respondo al instante.";
         chat.innerHTML = "";
-        appendToChat(mkTurn(greet, "agent"));
+        appendToChat(mkTurn(greet, "agent"), { scroll: false });
 
         renderChips(DEFAULT_CHIPS);
+        updateChipsVisibility();
         input.disabled = false;
         sendBtn.disabled = false;
       }
+
+      function dismissChips() {
+        state.chipsDismissed = true;
+        chipsEl.classList.add("chips-dismissed");
+        chipsEl.classList.remove("chips-visible");
+      }
+
+      function updateChipsVisibility() {
+        if (state.chipsDismissed || !chipsEl.children.length) return;
+        if (scrollEl.scrollTop > 160) {
+          chipsEl.classList.add("chips-visible");
+        } else {
+          chipsEl.classList.remove("chips-visible");
+        }
+      }
+
+      scrollEl.addEventListener("scroll", updateChipsVisibility, { passive: true });
 
       function renderChips(labels) {
         chipsEl.innerHTML = "";
@@ -733,9 +768,10 @@
         });
       }
 
-      function appendToChat(node) {
+      function appendToChat(node, opts) {
+        opts = opts || {};
         chat.appendChild(node);
-        scrollToBottom();
+        if (opts.scroll !== false) scrollToBottom();
         return node;
       }
 
@@ -782,6 +818,8 @@
           chipBtn.disabled = true;
           input.blur();
         }
+
+        if (!state.chipsDismissed) dismissChips();
 
         appendToChat(mkTurn(q, "user"));
         input.value = "";
