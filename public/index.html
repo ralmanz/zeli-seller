@@ -362,24 +362,18 @@
     }
 
     .chat-chips-row {
-      display: flex;
-      gap: 11px;
-      align-items: flex-start;
       margin: -12px 0 24px;
-      padding: 0 20px;
     }
 
-    .chat-chips-spacer {
-      width: 28px;
-      flex-shrink: 0;
+    .chat-chips-row.chat-chips-row--tail {
+      margin: 8px 0 24px;
     }
 
     .chat-chips {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      flex: 1;
-      min-width: 0;
+      justify-content: flex-end;
     }
 
     .chip {
@@ -738,16 +732,27 @@
         }
       }
 
+      function removeChip(btn) {
+        if (!btn || !btn.parentNode) return;
+        btn.remove();
+        if (!chipsRow) return;
+        var wrap = chipsRow.querySelector(".chat-chips");
+        if (!wrap || !wrap.children.length) clearChips();
+      }
+
+      function moveChipsToBottom() {
+        if (!chipsRow) return;
+        chipsRow.classList.add("chat-chips-row--tail");
+        chat.appendChild(chipsRow);
+        scrollToBottom();
+      }
+
       function renderChips(labels) {
         clearChips();
         chipsRow = document.createElement("div");
         chipsRow.className = "chat-chips-row";
         chipsRow.setAttribute("role", "group");
         chipsRow.setAttribute("aria-label", "Preguntas sugeridas");
-
-        var spacer = document.createElement("div");
-        spacer.className = "chat-chips-spacer";
-        spacer.setAttribute("aria-hidden", "true");
 
         var wrap = document.createElement("div");
         wrap.className = "chat-chips";
@@ -763,7 +768,6 @@
           wrap.appendChild(btn);
         });
 
-        chipsRow.appendChild(spacer);
         chipsRow.appendChild(wrap);
         chat.appendChild(chipsRow);
       }
@@ -821,13 +825,12 @@
         if (!q || state.busy || !state.listing) return;
 
         if (chipBtn) {
-          chipBtn.disabled = true;
+          removeChip(chipBtn);
           input.blur();
         }
 
-        clearChips();
-
         appendToChat(mkTurn(q, "user"));
+        moveChipsToBottom();
         input.value = "";
         handoffSlot.innerHTML = "";
 
@@ -851,10 +854,12 @@
 
           if (!res.ok) {
             appendToChat(mkTurn("Algo salió mal. Intenta de nuevo en un momento.", "agent"));
+            moveChipsToBottom();
             return;
           }
 
           appendToChat(mkTurn(data.reply, "agent"));
+          moveChipsToBottom();
 
           if (data.decision === "handoff" && data.whatsapp) {
             mkHandoff(data.whatsapp);
@@ -864,6 +869,7 @@
           appendToChat(
             mkTurn("No pude conectar. Revisa tu internet e intenta de nuevo.", "agent"),
           );
+          moveChipsToBottom();
         } finally {
           setBusy(false);
           if (!chipBtn) input.focus();
