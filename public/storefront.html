@@ -109,9 +109,12 @@
 
 <script>
 (function () {
-  var path = location.pathname.match(/\/b\/([^\/]+)/);
-  var brokerId = (path && decodeURIComponent(path[1])) ||
-                 new URLSearchParams(location.search).get("id");
+  var params = new URLSearchParams(location.search);
+  var pathMatch = location.pathname.match(/\/b\/([^/]+)/);
+  var brokerId =
+    (pathMatch && decodeURIComponent(pathMatch[1])) ||
+    params.get("broker") ||
+    params.get("id");
 
   var $brand = document.getElementById("brand");
   var $lede  = document.getElementById("lede");

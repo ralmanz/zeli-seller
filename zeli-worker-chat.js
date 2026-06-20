@@ -217,16 +217,19 @@ export default {
     }
 
     if (env.ASSETS) {
-      if (request.method === "GET" && /^\/b\/[^/]+\/?$/.test(path)) {
-        return env.ASSETS.fetch(
-          new Request(new URL("/storefront.html", url.origin), request),
-        );
+      const brokerPage = path.match(/^\/b\/([^/]+)\/?$/);
+      if (request.method === "GET" && brokerPage) {
+        return serveBrokerStorefront(env, request, url, decodeURIComponent(brokerPage[1]));
+      }
+
+      if (request.method === "GET" && isListingSlugPath(path)) {
+        return serveAssetHtml(env, request, new URL("/index.html", url.origin));
       }
 
       const asset = await env.ASSETS.fetch(request);
       if (asset.status !== 404) return asset;
       if (request.method === "GET" && !path.includes(".")) {
-        return env.ASSETS.fetch(new Request(new URL("/index.html", url.origin), request));
+        return serveAssetHtml(env, request, new URL("/index.html", url.origin));
       }
       return asset;
     }
@@ -244,7 +247,8 @@ async function handleGetListing(env, listingRef) {
               l.beds, l.baths, l.area_m2, l.parking, l.facts_json, l.status,
               b.name AS broker_name, b.agency AS broker_agency,
               (SELECT COUNT(*) FROM listings l2
-                 WHERE l2.broker_id = l.broker_id AND l2.status = 'active') AS active_count
+                 WHERE l2.broker_id = l.broker_id AND l2.status = 'active'
+                   AND l2.id != l.id) AS other_active_count
        FROM listings l
        JOIN brokers b ON b.id = l.broker_id
        WHERE (l.id = ? OR l.slug = ?) AND l.status = 'active'`,
@@ -281,11 +285,48 @@ async function handleGetListing(env, listingRef) {
     },
   };
 
-  if (Number(row.active_count) > 1) {
+  if (Number(row.other_active_count) > 0) {
     payload.storefront = { href: `/b/${row.broker_id}` };
   }
 
   return json(payload);
+}
+
+async function serveBrokerStorefront(env, request, url, brokerId) {
+  const assetUrl = new URL("/storefront.html", url.origin);
+  assetUrl.searchParams.set("broker", brokerId);
+  return serveAssetHtml(env, request, assetUrl);
+}
+
+function isListingSlugPath(path) {
+  if (!path || path === "/") return false;
+  if (path.startsWith("/api/") || /^\/b\//.test(path)) return false;
+  if (path.includes(".")) return false;
+  const segment = path.replace(/^\//, "").replace(/\/$/, "");
+  return segment !== "index.html" && segment !== "storefront.html" && segment !== "storefront";
+}
+
+async function serveAssetHtml(env, request, urlOrPath) {
+  const assetUrl = typeof urlOrPath === "string"
+    ? new URL(urlOrPath, request.url)
+    : urlOrPath;
+
+  let res = await env.ASSETS.fetch(new Request(assetUrl, request));
+  if (res.status >= 300 && res.status < 400) {
+    const loc = res.headers.get("Location");
+    if (loc) {
+      res = await env.ASSETS.fetch(new Request(new URL(loc, assetUrl.origin), request));
+    }
+  }
+
+  const html = await res.text();
+  return new Response(html, {
+    status: res.ok ? 200 : res.status,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "public, max-age=0, must-revalidate",
+    },
+  });
 }
 
 // --- Storefront (read-only, per-broker) --------------------------------------
